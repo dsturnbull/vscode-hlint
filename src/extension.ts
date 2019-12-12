@@ -48,15 +48,6 @@ const commands = {
 };
 
 /**
- * Wrap a command with "stack exec".
- *
- * @param cmd The command to wrap
- * @return cmd wrapped with stack exec
- */
-const stackExec = (cmd: ReadonlyArray<string>): ReadonlyArray<string> =>
-    ["stack", "exec", "--", ...cmd];
-
-/**
  * An HLint message, as it appears in HLint's JSON output.
  */
 interface IHLintMessage {
@@ -208,7 +199,7 @@ const refactor =
         temporaryFile(refactorings)
             .concatMap((refactFile) =>
                 runInWorkspace(
-                    stackExec(["refactor", "--refact-file", refactFile.path]),
+                    ["refactor", "--refact-file", refactFile.path],
                     code,
                 ).finally(() => refactFile.cleanup()))
             .map((stdout) => {
@@ -279,7 +270,7 @@ interface IHLintResult {
  */
 const lintDocument = (document: TextDocument): Observable<IHLintResult> => {
     return runInWorkspace(
-        stackExec(["hlint", "--no-exit-code", "--json", "-"]),
+        ["hlint", "--no-exit-code", "--json", "-"],
         document.getText(),
     ).map((stdout) => ({ document, messages: JSON.parse(stdout) }));
 };
@@ -460,7 +451,7 @@ export function activate(context: ExtensionContext): Promise<any> {
     // Enable linting with HLint or fail if it's missing or doesn't meet our
     // requirements
     const enableLinting = getExpectedVersion(
-        "HLint", stackExec(["hlint", "--version"]),
+        "HLint", ["hlint", "--version"],
         /^HLint v([^,]+),/, VERSION_RANGES.hlint,
     ).do((version) => {
         console.info("lunaryorn.hlint: found HLint version", version,
@@ -475,7 +466,7 @@ export function activate(context: ExtensionContext): Promise<any> {
     // (these have at most three components).  To work around this we explicitly
     // extract just the first three components of the refactor version number.
     const enableRefactoring = getExpectedVersion(
-        "apply-refact", stackExec(["refactor", "--version"]),
+        "apply-refact", ["refactor", "--version"],
         /^v(\d+\.\d+\.\d+)/, VERSION_RANGES.applyRefact,
     ).catch((error) => {
         if (error.name instanceof VersionError) {
